@@ -4,7 +4,7 @@ A very minimal static site generator.
 
 Migi is named after the parasite which lives in Shinichi's right hand in the anime parasyte, which in turn was named after the Japanese word for right (ミギー).
 
-For instructions on how to use Migi, please read [this]() short walk-through.
+For instructions on how to use Migi, please read the short walk-through on the [wiki page](../../wiki).
 
 
 ## Features
