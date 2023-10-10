@@ -22,6 +22,6 @@ Migi is currently not available via package managers.
 Clone this repo and build Migi using cargo:
 
 ```bash
-$ git clone https://github.com/soystemd/migi.rs
+$ git clone https://github.com/soystemd/migi
 $ cargo build --release
 ```
