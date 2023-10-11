@@ -19,9 +19,14 @@ For instructions on how to use Migi, please read the short walk-through on the [
 
 Migi is currently not available via package managers.
 
-Clone this repo and build Migi using cargo:
+Instead, clone this repo and use the provided `Makefile`:
 
 ```bash
-$ git clone https://github.com/soystemd/migi
-$ cargo build --release
+$ make build && sudo make install
+```
+
+To completely uninstall Migi:
+
+```bash
+$ sudo make uninstall
 ```

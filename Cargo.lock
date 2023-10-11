@@ -216,6 +216,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f232d6ef707e1956a43342693d2a31e72989554d58299d7a88738cc95b0d35c"
 
 [[package]]
+name = "migi"
+version = "0.1.0"
+dependencies = [
+ "minify-html-onepass",
+ "once_cell",
+ "pulldown-cmark",
+ "regex",
+ "serde",
+ "serde_json",
+ "syntect",
+ "termcolor",
+ "toml",
+]
+
+[[package]]
 name = "minify-html-onepass"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -471,21 +486,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96426c9936fd7a0124915f9185ea1d20aa9445cc9821142f0a73bc9207a2e186"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "ssg"
-version = "0.1.0"
-dependencies = [
- "minify-html-onepass",
- "once_cell",
- "pulldown-cmark",
- "regex",
- "serde",
- "serde_json",
- "syntect",
- "termcolor",
- "toml",
 ]
 
 [[package]]
