@@ -46,15 +46,15 @@ pub fn template_engine(change_file: &PathBuf) {
         //let minification_config = minify_html_onepass::Cfg::new();
         //let minified_template = minify_html_onepass::in_place_str(&mut formatted_template, &minification_config).unwrap();
 
-        write(
-            format!(
-                "build/{}",
-                &template_file_as_string.replace("templates/", "")
+    }
+    write(
+        format!(
+            "build/{}",
+            &template_file_as_string.replace("templates/", "")
             ),
             &formatted_template,
-        )
+            )
         .unwrap();
-    }
 }
 
 fn li_href_generator(meta_data: Vec<(String, String)>) -> String {
