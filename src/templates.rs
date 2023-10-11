@@ -42,17 +42,16 @@ pub fn template_engine(change_file: &PathBuf) {
 
         let replacement = li_href_generator(tags_matched_file);
         formatted_template = formatted_template.replace(&mat[0], &replacement);
-
-        //let minification_config = minify_html_onepass::Cfg::new();
-        //let minified_template = minify_html_onepass::in_place_str(&mut formatted_template, &minification_config).unwrap();
-
     }
+    let minification_config = minify_html_onepass::Cfg::new();
+    let minified_template = minify_html_onepass::in_place_str(&mut formatted_template, &minification_config).unwrap();
+
     write(
         format!(
             "build/{}",
             &template_file_as_string.replace("templates/", "")
             ),
-            &formatted_template,
+            &minified_template
             )
         .unwrap();
 }
