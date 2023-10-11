@@ -1,3 +1,4 @@
+use crate::logging;
 use pulldown_cmark::{html, CodeBlockKind, Event, Options, Parser, Tag};
 use std::{borrow::Cow, io, path::{PathBuf, Path}, panic};
 use syntect::{
@@ -7,11 +8,10 @@ use syntect::{
     util::LinesWithEndings,
 };
 
-use std::io::Write;
-use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 use serde::{Deserialize, Serialize};
 use std::fs;
+
 
 #[derive(Deserialize, Serialize)]
 struct Config {
@@ -47,7 +47,7 @@ fn syntect_highlight<'a>( code_snippet: String,
     if !Path::new(&format!("./assets/syntax/{}", &theme_name)).is_file() {
         let theme_ref = theme_name.to_owned();
         panic::set_hook(Box::new(move |_| {
-            println!("Could not find syntax-theme: {}", &theme_ref);
+            logging::error(format!("Could not find syntax-theme: {}", &theme_ref).as_str());
         }));
     }
 
@@ -130,12 +130,7 @@ pub fn remove_header(file_name: &PathBuf, file_content: &mut String) -> String {
     }
 
     if in_block_toggle == 0 {
-        let mut stdout = StandardStream::stdout(ColorChoice::Always);
-        stdout.set_color(ColorSpec::new().set_fg(Some(Color::Yellow))).unwrap();
-
-        write!(&mut stdout, "warning ").unwrap();
-        WriteColor::reset(&mut stdout).unwrap();
-        writeln!(&mut stdout, "`{}` does not contain a valid header", &file_name.to_string_lossy()).unwrap();
+        logging::warn(format!("`{}` does not contain a valid header", &file_name.to_string_lossy()).as_str())
     }
 
     file_content.split_off(cursor)
