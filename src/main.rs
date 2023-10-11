@@ -2,16 +2,20 @@ use std::{
     env,
     fs::{self, create_dir_all, write},
     io,
-    path::Path, process::Command,
+    path::Path,
 };
+
+use walkdir::WalkDir;
 
 mod cache;
 mod default;
 mod markdown;
 mod source;
 mod templates;
+mod logging;
 
-pub const BUILD_DIR: &str = "build/page";
+pub const BUILD_DIR: &str = "build";
+pub const PAGE_BUILD_DIR: &str = "build/page";
 pub const TEMPLATES_DIR: &str = "templates/";
 pub const PAGE_TEMPLATE: &str = "templates/page.html";
 pub const CONTENT_CACHE: &str = "cache/content.json";
@@ -32,7 +36,8 @@ fn main() -> Result<(), io::Error> {
 
     let subcommand = arguments.next().unwrap_or_else(|| {
         usage(&program);
-        eprintln!("ERROR: no subcommands were provided");
+
+        logging::error("no subcommands were provided");
         std::process::exit(1);
     });
 
@@ -41,24 +46,24 @@ fn main() -> Result<(), io::Error> {
             match arguments.next() {
                 Some(project_name) => {
                     if let Err(err) = source::setup_new_project(&project_name) {
-                        println!("ERROR: {}", err);
+                        logging::error(format!("{}", err).as_str());
                         std::process::exit(1);
                     }
                 },
                 None => {
-                    println!("ERROR: expected a project.");
+                    logging::error("expected a project.");
                     std::process::exit(1);
                 }
             }
         }
         "build" => {
             if !Path::new(&"config.toml").is_file() {
-                eprintln!("ERROR: failed to find: `config.toml` file.\n");
+                logging::error("failed to find: `config.toml` file.");
                 std::process::exit(1);
             }
 
-            if !Path::new(BUILD_DIR).exists() {
-                create_dir_all(BUILD_DIR)?;
+            if !Path::new(PAGE_BUILD_DIR).exists() {
+                create_dir_all(PAGE_BUILD_DIR)?;
             }
 
             let mut work_count = 0;
@@ -69,7 +74,7 @@ fn main() -> Result<(), io::Error> {
             content_cache.write_to_json()?;
 
             let html_file_template = fs::read_to_string(PAGE_TEMPLATE).unwrap_or_else(|_| {
-                eprintln!("ERROR: the template `page.html` could not be found.");
+                logging::error("the template `page.html` could not be found.");
                 std::process::exit(1);
             });
 
@@ -86,33 +91,42 @@ fn main() -> Result<(), io::Error> {
                 
                 let minify_html = minify_html_onepass::in_place_str(&mut output_templates, &minify_html_onepass::Cfg::new());
 
-                println!("{} -> {}", &change_file.display(), &file_name);
-                write(format!("{BUILD_DIR}/{file_name}"), minify_html.unwrap())?
+                logging::info(format!("converted {} -> {}", &change_file.display(), &file_name).as_str());
+                write(format!("{PAGE_BUILD_DIR}/{file_name}"), minify_html.unwrap())?
             }
 
-            for template in templates::file_names()? {
-                templates::template_engine(&template);
+            for entry in WalkDir::new(TEMPLATES_DIR) {
+                templates::template_engine(&entry?.into_path());
             }
 
-            // TODO: this is a horrible solution and assumes only Unix..
-            Command::new("cp")
-                .arg("-r")
-                .arg("assets")
-                .arg("build")
-                .output()?;
+            for asset in WalkDir::new("assets") {
+                let handle = asset?.path().to_owned();
+                let build_dir_path = format!("{BUILD_DIR}/{}", handle.to_string_lossy());
+
+                if handle.is_dir() {
+                    create_dir_all(&build_dir_path)?;
+                }
+
+                if handle.is_file() {
+                    fs::copy(&handle, build_dir_path)?;
+                }
+            }
 
             match work_count {
                 0 => {
-                    println!("All files are already up to date.");
+                    logging::info("All files are already up to date.");
                 }
                 _ => {
-                    println!("{} files were affected.", &work_count);
+                    logging::info(format!("{} files were affected.", &work_count).as_str());
                 }
             }
+        },
+        "serve" => {
+            unimplemented!()
         }
         _ => {
             usage(&program);
-            eprintln!("\nERROR: {} not found.", subcommand);
+            logging::error(format!("{} not found.", subcommand).as_str());
             std::process::exit(1);
         }
     }

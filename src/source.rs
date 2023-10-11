@@ -1,4 +1,4 @@
-use crate::{default, PAGE_TEMPLATE};
+use crate::{default, PAGE_TEMPLATE, logging};
 use std::{
     fs::{self, read_dir},
     io,
@@ -10,18 +10,13 @@ pub fn setup_new_project(project_name: &str) -> Result<(), io::Error> {
     let directories = vec!["content", "assets/syntax", "assets/css", "templates"];
 
     fs::create_dir(&root_directory)?;
-    println!(
-        "created directory `./{}`",
-        &root_directory.to_string_lossy()
-    );
+    logging::info(format!("created directory `./{}`", &root_directory.to_string_lossy()).as_str());
 
     for dir in directories {
         let dir_path = root_directory.join(&PathBuf::from(dir));
         fs::create_dir_all(&dir_path)?;
-        println!(
-            "created directory `./{}`",
-            &dir_path.to_string_lossy()
-        );
+
+        logging::info(format!("created directory `./{}`", &dir_path.to_string_lossy()).as_str());
     }
 
     let config_path = format!("{}/config.toml", &root_directory.to_string_lossy());
@@ -104,7 +99,7 @@ impl HeaderParser {
                         }
                         None => {
                             has_valid_title = false;
-                            eprintln!("Error: All files must contain a valid title.");
+                            logging::error("Error: All files must contain a valid title.");
                         }
                     }
                 }

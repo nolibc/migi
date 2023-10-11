@@ -1,15 +1,29 @@
 use crate::{
     cache::CacheData,
-    source::html_file_name, TEMPLATES_DIR, CONTENT_CACHE,
+    source::html_file_name, CONTENT_CACHE,
+    logging,
 };
 use std::{
     collections::HashSet,
-    fs::{self, read_dir, write, File},
-    io::{Read, self}, path::PathBuf,
+    fs::{self, write, File},
+    io::Read, path::{PathBuf, Path},
 };
 use {once_cell::sync::Lazy, regex::Regex};
 
 pub fn template_engine(change_file: &PathBuf) {
+
+    if change_file.is_dir() {
+        return
+    }
+
+    let stemmed_template_dir = change_file.to_string_lossy().to_string().replace("templates/", "build/");
+    let stemmed_path = Path::new(&stemmed_template_dir).parent().unwrap();
+
+    if !stemmed_path.exists() {
+        std::fs::create_dir_all(stemmed_path).unwrap_or_else(|e| {
+            logging::error(format!("could not create {}\n {}", stemmed_path.display(), e).as_str());
+        });
+    }
 
     let mut buffer = String::new();
 
@@ -46,14 +60,7 @@ pub fn template_engine(change_file: &PathBuf) {
     let minification_config = minify_html_onepass::Cfg::new();
     let minified_template = minify_html_onepass::in_place_str(&mut formatted_template, &minification_config).unwrap();
 
-    write(
-        format!(
-            "build/{}",
-            &template_file_as_string.replace("templates/", "")
-            ),
-            &minified_template
-            )
-        .unwrap();
+    write(&template_file_as_string.replace("templates/", "build/"), &minified_template).unwrap();
 }
 
 fn li_href_generator(meta_data: Vec<(String, String)>) -> String {
@@ -77,20 +84,4 @@ fn li_href_generator(meta_data: Vec<(String, String)>) -> String {
     container.push_str("\n</ul>");
 
     container
-}
-
-pub fn file_names() -> Result<Vec<PathBuf>, io::Error> {
-    let mut files_list: Vec<PathBuf> = Vec::new();
-
-    for entry in read_dir(TEMPLATES_DIR)? {
-        let entry = entry?;
-        let file_path = entry.path();
-
-        if let Some(ext) = file_path.extension() {
-            if ext == "html" {
-                files_list.push(file_path);
-            }
-        }
-    }
-    Ok(files_list)
 }
