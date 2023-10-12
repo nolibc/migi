@@ -22,7 +22,7 @@ Migi is currently not available via package managers.
 Instead, clone this repo and use the provided `Makefile`:
 
 ```bash
-$ make build && sudo make install
+$ make && sudo make install
 ```
 
 To completely uninstall Migi:
