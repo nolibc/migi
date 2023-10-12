@@ -51,6 +51,8 @@ pub fn markdown_file_names() -> Result<Vec<PathBuf>, io::Error> {
             if let Some(ext) = entry.path().extension() {
                 if ext.to_str().unwrap() == "md" {
                     captured_vec.push(entry.into_path());
+                } else {
+                    logging::warn(format!("file {} is not a markdown file and has been ignored.", entry.path().display()).as_str());
                 }
             }
         }
