@@ -1,6 +1,8 @@
-use crate::{default, PAGE_TEMPLATE, logging};
+use walkdir::WalkDir;
+
+use crate::{default, PAGE_TEMPLATE, logging, CONTENT};
 use std::{
-    fs::{self, read_dir},
+    fs::{self},
     io,
     path::PathBuf,
 };
@@ -29,7 +31,6 @@ pub fn setup_new_project(project_name: &str) -> Result<(), io::Error> {
     let css_path = format!("{}/assets/css/style.css", &root_directory.to_string_lossy());
     let generic_post = format!("{}/content/first_post.md", &root_directory.to_string_lossy());
 
-    // TODO: None of these will come bundled with Migi for final release.
     fs::write(config_path, default::get_config())?;
     fs::write(theme_path, default::get_theme())?;
     fs::write(page_template, default::get_page_template())?;
@@ -45,16 +46,16 @@ pub fn setup_new_project(project_name: &str) -> Result<(), io::Error> {
 pub fn markdown_file_names() -> Result<Vec<PathBuf>, io::Error> {
     let mut captured_vec: Vec<PathBuf> = Vec::new();
 
-    for entry in read_dir("content")? {
-        let entry = entry?;
-        let file_path = entry.path();
-
-        if let Some(ext) = file_path.extension() {
-            if ext == "md" {
-                captured_vec.push(file_path);
+    for entry in WalkDir::new(CONTENT) {
+        if let Ok(entry) = entry {
+            if let Some(ext) = entry.path().extension() {
+                if ext.to_str().unwrap() == "md" {
+                    captured_vec.push(entry.into_path());
+                }
             }
         }
     }
+
     Ok(captured_vec)
 }
 
