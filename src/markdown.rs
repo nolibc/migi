@@ -65,9 +65,6 @@ fn syntect_highlight<'a>( code_snippet: String,
 }
 
 pub fn compile(markdown_input: &str) -> String {
-    // TODO:
-    // look into the below options (all)... Do we really need this in loop
-    // and does it slow performance at all?
     let parser_options = Options::all();
     let parser = Parser::new_ext(markdown_input, parser_options);
 

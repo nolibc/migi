@@ -19,6 +19,7 @@ pub const PAGE_BUILD_DIR: &str = "build/page";
 pub const TEMPLATES_DIR: &str = "templates/";
 pub const PAGE_TEMPLATE: &str = "templates/page.html";
 pub const CONTENT_CACHE: &str = "cache/content.json";
+pub const CONTENT: &str = "content";
 
 fn usage(program: &str) {
     eprintln!(
@@ -78,7 +79,6 @@ fn main() -> Result<(), io::Error> {
                 std::process::exit(1);
             });
 
-
             for change_file in content_cache.required_changes.into_inner() {
                 let mut file_contents = fs::read_to_string(&change_file)?;
                 let headerless_file_contents = markdown::remove_header(&change_file, &mut file_contents);
@@ -121,9 +121,6 @@ fn main() -> Result<(), io::Error> {
                 }
             }
         },
-        "serve" => {
-            unimplemented!()
-        }
         _ => {
             usage(&program);
             logging::error(format!("{} not found.", subcommand).as_str());
