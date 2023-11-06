@@ -17,9 +17,13 @@ For instructions on how to use Migi, please read the short walk-through on the [
 
 ## Build
 
-Migi is currently not available via package managers.
+Migi is available on [Crates.io](https://crates.io/crates/migi)
 
-Instead, clone this repo and use the provided `Makefile`:
+```bash
+cargo install migi
+```
+
+You can also build Migi using the provided `Makefile`:
 
 ```bash
 $ make && sudo make install
