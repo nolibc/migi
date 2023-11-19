@@ -14,13 +14,19 @@ use std::fs;
 
 
 #[derive(Deserialize, Serialize)]
-struct Config {
-    themes: Themes
+pub struct Config {
+    themes: Themes,
+    pub tagging: Tagging,
 }
 
 #[derive(Deserialize, Serialize)]
 struct Themes {
     syntax: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct Tagging {
+    pub sorted: bool,
 }
 
 fn syntect_highlight<'a>( code_snippet: String,

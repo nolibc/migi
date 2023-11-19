@@ -2,6 +2,9 @@ pub fn get_config() -> String {
     String::from(
         r#"[themes]
 syntax = "Tomorrow-Night.tmTheme"
+
+[tagging]
+sorted = true
 "#,
     )
 }

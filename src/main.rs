@@ -91,8 +91,8 @@ fn main() -> Result<(), io::Error> {
                 
                 let minify_html = minify_html_onepass::in_place_str(&mut output_templates, &minify_html_onepass::Cfg::new());
 
-                logging::info(format!("converted {} -> {}", &change_file.display(), &file_name).as_str());
-                write(format!("{PAGE_BUILD_DIR}/{file_name}"), minify_html.unwrap())?
+                logging::info(format!("converted {:?} -> {:?}", &change_file, &file_name).as_str());
+                write(format!("{PAGE_BUILD_DIR}/{}", file_name.to_string_lossy().to_string()), minify_html.unwrap())?
             }
 
             for entry in WalkDir::new(TEMPLATES_DIR) {

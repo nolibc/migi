@@ -4,7 +4,7 @@ use crate::{default, PAGE_TEMPLATE, logging, CONTENT};
 use std::{
     fs::{self},
     io,
-    path::PathBuf,
+    path::{PathBuf, Path},
 };
 
 pub fn setup_new_project(project_name: &str) -> Result<(), io::Error> {
@@ -142,7 +142,16 @@ impl HeaderParser {
     }
 }
 
-pub fn html_file_name(md_file_name: &PathBuf) -> String {
-    let file_stemmed = md_file_name.file_stem().and_then(|stem| stem.to_str()).unwrap();
-    format!("{}.html", file_stemmed)
+pub fn html_file_name(md_file_name: &PathBuf) -> PathBuf {
+    let file_stemmed = md_file_name.file_stem().and_then(|stem| Some(stem.to_string_lossy().to_string()));
+    match file_stemmed {
+        Some(file) => {
+            let path = Path::new(&file).to_path_buf();
+            return path;
+        },
+        None => {
+            logging::warn("issues stemming a file... skipping for now.");
+            return Path::new("").to_path_buf();
+        }
+    }
 }

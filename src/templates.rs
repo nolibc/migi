@@ -1,12 +1,12 @@
 use crate::{
     cache::CacheData,
     source::html_file_name, CONTENT_CACHE,
-    logging,
+    logging, markdown::Config,
 };
 use std::{
     collections::HashSet,
     fs::{self, write, File},
-    io::Read, path::{PathBuf, Path},
+    io::Read, path::{PathBuf, Path}
 };
 use {once_cell::sync::Lazy, regex::Regex};
 
@@ -43,7 +43,7 @@ pub fn template_engine(change_file: &PathBuf) {
     for mat in RE.captures_iter(&template_file_content) {
         let tag_section = &mat[1];
         let tags: Vec<&str> = tag_section.split_whitespace().collect();
-        let mut tags_matched_file: Vec<(String, String)> = Vec::new();
+        let mut tags_matched_file: Vec<(PathBuf, String)> = Vec::new();
 
         for tag in tags {
             for file in &loaded_cache {
@@ -63,20 +63,27 @@ pub fn template_engine(change_file: &PathBuf) {
     write(&template_file_as_string.replace("templates/", "build/"), &minified_template).unwrap();
 }
 
-fn li_href_generator(meta_data: Vec<(String, String)>) -> String {
+fn li_href_generator(meta_data: Vec<(PathBuf, String)>) -> String {
+    let config_file = fs::read_to_string("config.toml").unwrap();
+    let config: Config = toml::from_str(&config_file).unwrap();
+    let sorting = config.tagging.sorted;
+
     let mut unique_items = HashSet::new();
     let mut deduplicated_data = Vec::new();
 
     for item in meta_data {
         if unique_items.insert(item.1.clone()) {
             deduplicated_data.push(item);
+            if sorting {
+                deduplicated_data.sort();
+            }
         }
     }
 
     let mut container = String::from("<ul>\n");
     let output: String = deduplicated_data
         .iter()
-        .map(|item| format!("<li><a href=\"page/{}\">{}</a></li>", item.0, item.1))
+        .map(|item| format!("<li><a href=\"page/{}\">{}</a></li>", item.0.to_string_lossy().to_string(), item.1))
         .collect::<Vec<String>>()
         .join("\n");
 
