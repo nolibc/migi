@@ -7,7 +7,7 @@ readme = "README.md"
 license = "MIT"
 keywords = ["website", "static", "site", "ssg", "generator"]
 categories = ["command-line-utilities"]
-repository = "https://github.com/soystemd/migi"
+repository = "https://github.com/abql/migi"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
