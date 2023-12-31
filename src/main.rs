@@ -9,13 +9,13 @@ mod source;
 mod templates;
 mod logging;
 
-pub const BUILD_DIR     : &str = "build/";
+pub const BUILD_DIR: &str = "build/";
 pub const PAGE_BUILD_DIR: &str = "build/page/";
-pub const TEMPLATES_DIR : &str = "templates/";
-pub const PAGE_TEMPLATE : &str = "templates/page.html";
-pub const CONTENT_CACHE : &str = "cache/content.json";
-pub const CONTENT       : &str = "content/";
-pub const ASSETS        : &str = "assets/";
+pub const TEMPLATES_DIR: &str = "templates/";
+pub const PAGE_TEMPLATE: &str = "templates/page.html";
+pub const CONTENT_CACHE: &str = "cache/content.json";
+pub const CONTENT: &str = "content/";
+pub const ASSETS: &str = "assets/";
 
 fn usage(program: &str) {
     eprintln!(
@@ -24,7 +24,8 @@ An extremely minimal static site generator.
 
 Commands:
     new <directory>     create new project directory
-    build               build project outputting html\n");
+    build               build project outputting html
+    version             show the version of migi\n");
 }
 
 fn main() -> Result<()> {
@@ -69,7 +70,10 @@ fn main() -> Result<()> {
                     logging::info(format!("{} files were affected.", work_count).as_str());
                 }
             }
-        },
+        }
+        "version" => {
+            println!("migi v0.1.2")
+        }
         _ => {
             usage(&program);
             logging::error(format!("{} not found.", subcommand).as_str());
