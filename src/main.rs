@@ -1,10 +1,5 @@
-use std::{
-    env,
-    fs::{self, create_dir_all, write},
-    io,
-    path::Path,
-};
-
+use std::env;
+use anyhow::Result;
 use walkdir::WalkDir;
 
 mod cache;
@@ -14,12 +9,13 @@ mod source;
 mod templates;
 mod logging;
 
-pub const BUILD_DIR: &str = "build";
-pub const PAGE_BUILD_DIR: &str = "build/page";
-pub const TEMPLATES_DIR: &str = "templates/";
-pub const PAGE_TEMPLATE: &str = "templates/page.html";
-pub const CONTENT_CACHE: &str = "cache/content.json";
-pub const CONTENT: &str = "content";
+pub const BUILD_DIR     : &str = "build/";
+pub const PAGE_BUILD_DIR: &str = "build/page/";
+pub const TEMPLATES_DIR : &str = "templates/";
+pub const PAGE_TEMPLATE : &str = "templates/page.html";
+pub const CONTENT_CACHE : &str = "cache/content.json";
+pub const CONTENT       : &str = "content/";
+pub const ASSETS        : &str = "assets/";
 
 fn usage(program: &str) {
     eprintln!(
@@ -31,7 +27,7 @@ Commands:
     build               build project outputting html\n");
 }
 
-fn main() -> Result<(), io::Error> {
+fn main() -> Result<()> {
     let mut arguments = env::args();
     let program = arguments.next().unwrap();
 
@@ -58,66 +54,19 @@ fn main() -> Result<(), io::Error> {
             }
         }
         "build" => {
-            if !Path::new(&"config.toml").is_file() {
-                logging::error("failed to find: `config.toml` file.");
-                std::process::exit(1);
-            }
-
-            if !Path::new(PAGE_BUILD_DIR).exists() {
-                create_dir_all(PAGE_BUILD_DIR)?;
-            }
-
-            let mut work_count = 0;
-
-            let markdown_files = source::markdown_file_names()?;
-            let mut content_cache = cache::CacheData::create_manager(markdown_files, CONTENT_CACHE)?;
-            content_cache.process_data()?;
-            content_cache.write_to_json()?;
-
-            let html_file_template = fs::read_to_string(PAGE_TEMPLATE).unwrap_or_else(|_| {
-                logging::error("the template `page.html` could not be found.");
-                std::process::exit(1);
-            });
-
-            for change_file in content_cache.required_changes.into_inner() {
-                let mut file_contents = fs::read_to_string(&change_file)?;
-                let headerless_file_contents = markdown::remove_header(&change_file, &mut file_contents);
-
-                let html_output = markdown::compile(&headerless_file_contents);
-                let file_name = source::html_file_name(&change_file);
-                work_count += 1;
-
-                let mut output_templates = html_file_template.replace("{{ content }}", &html_output);
-                
-                let minify_html = minify_html_onepass::in_place_str(&mut output_templates, &minify_html_onepass::Cfg::new());
-
-                logging::info(format!("converted {:?} -> {:?}", &change_file, &file_name).as_str());
-                write(format!("{PAGE_BUILD_DIR}/{}", file_name.to_string_lossy().to_string()), minify_html.unwrap())?
-            }
-
+            source::prechecks()?;
+            let content_cache = source::scan_cache()?;
+            let work_count = source::markdown_to_html_export(content_cache)?;
             for entry in WalkDir::new(TEMPLATES_DIR) {
                 templates::template_engine(&entry?.into_path());
             }
-
-            for asset in WalkDir::new("assets") {
-                let handle = asset?.path().to_owned();
-                let build_dir_path = format!("{BUILD_DIR}/{}", handle.to_string_lossy());
-
-                if handle.is_dir() {
-                    create_dir_all(&build_dir_path)?;
-                }
-
-                if handle.is_file() {
-                    fs::copy(&handle, build_dir_path)?;
-                }
-            }
-
+            source::copy_assets(ASSETS)?;
             match work_count {
                 0 => {
                     logging::info("All files are already up to date.");
                 }
                 _ => {
-                    logging::info(format!("{} files were affected.", &work_count).as_str());
+                    logging::info(format!("{} files were affected.", work_count).as_str());
                 }
             }
         },
@@ -127,6 +76,5 @@ fn main() -> Result<(), io::Error> {
             std::process::exit(1);
         }
     }
-
     Ok(())
 }

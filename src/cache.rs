@@ -3,13 +3,14 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
     fs::{self, File},
-    io::{self, Read, Write},
+    io::{Read, Write},
     path::{Path, PathBuf},
     time::SystemTime, rc::Rc,
 };
 
 use crate::source;
 use std::cell::RefCell;
+use anyhow::Result;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CacheData {
@@ -37,15 +38,27 @@ impl ReturnJson for PathBuf {
 
     fn populate_struct(&self) -> Self::Output {
         let file_contents = fs::read_to_string(self).unwrap();
-        let file_data = source::HeaderParser::get_data(&file_contents).unwrap();
-
-        CacheData {
-            name: self.into(),
-            title: file_data.title,
-            last_modified: modification_time(self.into()),
-            tags: file_data.tags,
-            created: created_date(self.into()),
+        match source::HeaderParser::get_data(&file_contents) {
+            Some(file_data) => {
+                CacheData {
+                    name: self.into(),
+                    title: file_data.title,
+                    last_modified: modification_time(self.into()),
+                    tags: file_data.tags,
+                    created: created_date(self.into()),
+                }
+            }
+            None => {
+                CacheData {
+                    name: self.into(),
+                    title: "INVALID - NO TITLE".to_string(),
+                    last_modified: modification_time(self.into()),
+                    tags: vec![],
+                    created: created_date(self.into()),
+                }
+            }
         }
+
     }
 }
 
@@ -83,7 +96,7 @@ impl DataManager {
         }
     }
 
-    pub fn write_to_json(&self) -> Result<(), io::Error> {
+    pub fn write_to_json(&self) -> Result<()> {
         let mut buffer = File::create(self.cache_name.as_ref()).unwrap();
         serde_json::to_writer_pretty(&mut buffer, &self.cache.take()).unwrap();
 
@@ -92,7 +105,7 @@ impl DataManager {
     /// A convience method that abstracts the work of the other available caching methods.
     ///
     /// Note: this method does not include the write to file provided by `write_to_json`.
-    pub fn process_data(&mut self) -> Result<(), io::Error> {
+    pub fn process_data(&mut self) -> Result<()> {
         self.remove_missing_entries();
         self.update_outdated_entries();
         self.add_new_entries();
@@ -122,7 +135,7 @@ fn created_date(path: PathBuf) -> SystemTime {
 }
 
 impl CacheData {
-    fn read(cache_file: &str) -> Result<Vec<Self>, io::Error> {
+    fn read(cache_file: &str) -> Result<Vec<Self>> {
         if !Path::new(cache_file).exists() {
             fs::create_dir_all("cache")?;
             let mut f = File::create(cache_file)?;
@@ -135,7 +148,7 @@ impl CacheData {
         Ok(serde_json::from_str(&buffer)?)
     }
 
-    pub fn create_manager(raw_files: Vec<PathBuf>, cache_file: &str) -> Result<DataManager, io::Error> {
+    pub fn create_manager(raw_files: Vec<PathBuf>, cache_file: &str) -> Result<DataManager> {
         let mut source_file_cache_info: HashMap<PathBuf, SystemTime> = HashMap::new();
 
         for file in raw_files {

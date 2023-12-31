@@ -1,17 +1,15 @@
 use crate::logging;
 use pulldown_cmark::{html, CodeBlockKind, Event, Options, Parser, Tag};
-use std::{borrow::Cow, io, path::{PathBuf, Path}, panic};
+use std::{borrow::Cow, path::{PathBuf, Path}, panic};
 use syntect::{
     highlighting::ThemeSet,
     html::{ClassStyle, ClassedHTMLGenerator},
     parsing::SyntaxSet,
     util::LinesWithEndings,
 };
-
-
 use serde::{Deserialize, Serialize};
 use std::fs;
-
+use anyhow::Result;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
@@ -31,7 +29,7 @@ pub struct Tagging {
 
 fn syntect_highlight<'a>( code_snippet: String,
     language_name: &str,
-) -> Result<Event<'a>, io::Error> {
+) -> Result<Event<'a>> {
     let syntax_set = SyntaxSet::load_defaults_newlines();
     let syntax = syntax_set
         .find_syntax_by_token(language_name)
@@ -113,7 +111,7 @@ pub fn compile(markdown_input: &str) -> String {
     string_holder
 }
 
-pub fn remove_header(file_name: &PathBuf, file_content: &mut String) -> String {
+pub fn remove_header(file_name: &PathBuf, file_content: &mut String) {
     let mut in_block_toggle = 0;
     let mut cursor = 0;
 
@@ -133,8 +131,8 @@ pub fn remove_header(file_name: &PathBuf, file_content: &mut String) -> String {
     }
 
     if in_block_toggle == 0 {
-        logging::warn(format!("`{}` does not contain a valid header", &file_name.to_string_lossy()).as_str())
+        logging::warn(format!("`{}` does not contain a valid header", &file_name.to_string_lossy()).as_str());
     }
 
-    file_content.split_off(cursor)
+    *file_content = file_content.split_off(cursor)
 }

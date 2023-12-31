@@ -1,29 +1,29 @@
 use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+use anyhow::Result;
+
+fn writer(message: &str, prompt: &str, color: ColorSpec) -> Result<()> {
+    let mut stdout = StandardStream::stdout(ColorChoice::Always);
+    stdout.set_color(&color)?;
+    write!(&mut stdout, "{prompt}: ")?;
+    WriteColor::reset(&mut stdout)?;
+    writeln!(&mut stdout, "{message}")?;
+    Ok(())
+}
+
+fn create_color_spec(color: Color) -> ColorSpec {
+    let colorspec = ColorSpec::new().set_fg(Some(color)).to_owned();
+    return colorspec;
+}
 
 pub fn info(message: &str) {
-    let mut stdout = StandardStream::stdout(ColorChoice::Always);
-    stdout.set_color(ColorSpec::new().set_fg(Some(Color::Rgb(43, 48, 71)))).unwrap();
-
-    write!(&mut stdout, "INFO: ").unwrap();
-    WriteColor::reset(&mut stdout).unwrap();
-    writeln!(&mut stdout, "{message}").unwrap();
+    writer(message, "INFO", create_color_spec(Color::Rgb(43, 48, 71))).unwrap();
 }
 
 pub fn warn(message: &str) {
-    let mut stdout = StandardStream::stdout(ColorChoice::Always);
-    stdout.set_color(ColorSpec::new().set_fg(Some(Color::Yellow))).unwrap();
-
-    write!(&mut stdout, "WARNING: ").unwrap();
-    WriteColor::reset(&mut stdout).unwrap();
-    writeln!(&mut stdout, "{message}").unwrap();
+    writer(message, "WARNING", create_color_spec(Color::Yellow)).unwrap();
 }
 
 pub fn error(message: &str) {
-    let mut stdout = StandardStream::stdout(ColorChoice::Always);
-    stdout.set_color(ColorSpec::new().set_fg(Some(Color::Red))).unwrap();
-
-    write!(&mut stdout, "ERROR: ").unwrap();
-    WriteColor::reset(&mut stdout).unwrap();
-    writeln!(&mut stdout, "{message}").unwrap();
+    writer(message, "ERROR", create_color_spec(Color::Red)).unwrap();
 }
